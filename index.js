@@ -6,25 +6,20 @@ const morgan = require('morgan')
 const cors = require('cors')
 const Person = require('./models/person')
 
-
-
 app.use(bodyParser.json())
-morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
+morgan.token('body', function (req) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use(cors())
 app.use(express.static('build'))
 
 
-
-
-
-app.get('/api/persons', (req,res) =>{
-   Person.find({}).then(persons => {
-     res.json(persons.map(person => person.toJSON()))
-   })
+app.get('/api/persons', (req,res) => {
+  Person.find({}).then(persons => {
+    res.json(persons.map(person => person.toJSON()))
+  })
 })
 
-app.post('/api/persons', (req,res, next) =>{
+app.post('/api/persons', (req,res, next) => {
 
   const body = req.body
 
@@ -57,51 +52,52 @@ app.post('/api/persons', (req,res, next) =>{
   person.save().then(savedPerson => {
     res.json(savedPerson.toJSON())
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (req,res,next) =>{
+app.get('/api/persons/:id', (req,res,next) => {
   const id = req.params.id
-  console.log(id)
   Person.findById(id)
-   .then(person =>{
-     res.json(person.toJSON())
-   })
-   .catch(error => next(error))
+    .then(person => {
+      res.json(person.toJSON())
+    })
+    .catch(error => next(error))
 })
 
-app.put('/api/persons/:id', (req,res, next) =>{
-    const body = req.body
-    const id = req.params.id
-    const person = {
-      name: body.name,
-      number: body.number
-    }
-    Person.findByIdAndUpdate(id, person, {new: true})
-     .then(updatedPerson =>{
-       res.json(updatedPerson.toJSON())
-     })
-     .catch(error => next(error))
+app.put('/api/persons/:id', (req,res, next) => {
+  const body = req.body
+  const id = req.params.id
+  const person = {
+    name: body.name,
+    number: body.number
+  }
+  Person.findByIdAndUpdate(id, person, { new: true })
+    .then(updatedPerson => {
+      res.json(updatedPerson.toJSON())
+    })
+    .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (req,res, next) =>{
-    const id = req.params.id
-    Person.findByIdAndDelete(id)
-      .then(result => {
-        res.status(204).end()
-      })
-      .catch(error => next)
-   
+app.delete('/api/persons/:id', (req,res, next) => {
+  const id = req.params.id
+  Person.findByIdAndDelete(id)
+    // eslint-disable-next-line no-unused-vars
+    .then(result => {
+      res.status(204).end()
+    })
+    // eslint-disable-next-line no-unused-vars
+    .catch(error => next)
+
 })
 
 
-app.get('/info', (req,res) =>{
-    Person.find({})
+app.get('/info', (req,res) => {
+  Person.find({})
     .then(persons => {
       res.send(
         `<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p>
         <p>${new Date()}</p>`
-    )
+      )
     })
 })
 
@@ -111,10 +107,9 @@ const unknownEndpoint = (req, res) => {
 }
 
 const errorHandler = (error, request, response, next) => {
-  console.log(error.message)
 
   if(error.name === 'ValidationError'){
-    return response.status(400).json({error: error.message})
+    return response.status(400).json({ error: error.message })
   }
 
   next(error)
@@ -127,5 +122,5 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
