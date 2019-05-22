@@ -24,7 +24,7 @@ app.get('/api/persons', (req,res) =>{
    })
 })
 
-app.post('/api/persons', (req,res) =>{
+app.post('/api/persons', (req,res, next) =>{
 
   const body = req.body
 
@@ -57,6 +57,7 @@ app.post('/api/persons', (req,res) =>{
   person.save().then(savedPerson => {
     res.json(savedPerson.toJSON())
   })
+  .catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (req,res,next) =>{
@@ -111,6 +112,10 @@ const unknownEndpoint = (req, res) => {
 
 const errorHandler = (error, request, response, next) => {
   console.log(error.message)
+
+  if(error.name === 'ValidationError'){
+    return response.status(400).json({error: error.message})
+  }
 
   next(error)
 }
