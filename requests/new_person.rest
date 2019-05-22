@@ -1,7 +1,7 @@
-POST https://glacial-oasis-43695.herokuapp.com/api/persons
+POST http://localhost:3001/api/persons/
 Content-Type: application/json
 
 {
-   "name": "Kalle Käki",
-   "number": "21321321"
+   "name": "Mika Häkkinen",
+   "number": "044-111111"
 }

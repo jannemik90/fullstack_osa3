@@ -1,8 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
 
 
 
@@ -13,35 +15,13 @@ app.use(cors())
 app.use(express.static('build'))
 
 
-let persons = [
-    {
-      "name": "Arto Hellas",
-      "number": "040-123456",
-      "id": 1
-    },
-    {
-      "name": "Martti Tienari",
-      "number": "040-123456",
-      "id": 2
-    },
-    {
-      "name": "Kalle Kivi",
-      "number": "2141441",
-      "id": 3
-    },
-    {
-      "name": "Rami Mujenki",
-      "number": "213213123",
-      "id": 4
-    }
-  ]
-
-
 
 
 
 app.get('/api/persons', (req,res) =>{
-    res.json(persons)
+   Person.find({}).then(persons => {
+     res.json(persons.map(person => person.toJSON()))
+   })
 })
 
 app.post('/api/persons', (req,res) =>{
@@ -59,50 +39,85 @@ app.post('/api/persons', (req,res) =>{
     })
   }
 
-  const personsWithSameName = persons.find(person => person.name.toLowerCase() === body.name.toLowerCase())
 
-  if(personsWithSameName){
-    return res.status(400).json({
-      error: 'name already exists'
-    })
-  }
 
-  const id = Math.floor(Math.random() * 9999)
+  // const personsWithSameName = Person.find({name: body.name})
+  //   console.log(personsWithSameName)
+  // if(personsWithSameName){
+  //   return res.status(400).json({
+  //     error: 'name already exists'
+  //   })
+  // }
 
-  const person = {
+  const person = new Person({
     name: body.name,
-    number: body.number,
-    id: id
-  }
+    number: body.number
+  })
 
-  persons = persons.concat(person)
-  res.json(person)
+  person.save().then(savedPerson => {
+    res.json(savedPerson.toJSON())
+  })
 })
 
-app.get('/api/persons/:id', (req,res) =>{
-    const id = Number(req.params.id)
-    const person = persons.find(person => person.id === id)
-    if(person){
-        res.json(person)
-    }else {
-        res.status(404).end()
+app.get('/api/persons/:id', (req,res,next) =>{
+  const id = req.params.id
+  console.log(id)
+  Person.findById(id)
+   .then(person =>{
+     res.json(person.toJSON())
+   })
+   .catch(error => next(error))
+})
+
+app.put('/api/persons/:id', (req,res, next) =>{
+    const body = req.body
+    const id = req.params.id
+    const person = {
+      name: body.name,
+      number: body.number
     }
-    
+    Person.findByIdAndUpdate(id, person, {new: true})
+     .then(updatedPerson =>{
+       res.json(updatedPerson.toJSON())
+     })
+     .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (req,res) =>{
-    const id = Number(req.params.id)
-    persons = persons.filter(person => person.id !== id)
-    res.status(204).end()
+app.delete('/api/persons/:id', (req,res, next) =>{
+    const id = req.params.id
+    Person.findByIdAndDelete(id)
+      .then(result => {
+        res.status(204).end()
+      })
+      .catch(error => next)
+   
 })
 
 
 app.get('/info', (req,res) =>{
-    res.send(
+    Person.find({})
+    .then(persons => {
+      res.send(
         `<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p>
         <p>${new Date()}</p>`
     )
+    })
 })
+
+
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' })
+}
+
+const errorHandler = (error, request, response, next) => {
+  console.log(error.message)
+
+  next(error)
+}
+
+app.use(unknownEndpoint)
+
+app.use(errorHandler)
 
 
 const PORT = process.env.PORT || 3001
